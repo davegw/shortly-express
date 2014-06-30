@@ -20,7 +20,7 @@ app.configure(function() {
 });
 
 app.get('/', function(req, res) {
-  res.render('index');
+  res.render('signup');
 });
 
 app.get('/create', function(req, res) {
@@ -69,6 +69,12 @@ app.post('/links', function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+
+app.get('/users', function(req, res) {
+  Users.reset().fetch().then(function(users) {
+    res.send(200, users.models);
+  });
+});
 
 app.post('/signup', function(req, res) {//users?
   var username = req.body.username;
