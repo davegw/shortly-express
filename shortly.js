@@ -30,7 +30,7 @@ app.get('/create', function(req, res) {
 app.get('/links', function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.send(200, links.models);
-  })
+  });
 });
 
 app.post('/links', function(req, res) {
@@ -70,6 +70,33 @@ app.post('/links', function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+app.post('/signup', function(req, res) {//users?
+  var username = req.body.username;
+  var password = req.body.password;
+
+  // if (!util.isValidUrl(uri)) {
+  //   console.log('Not a valid url: ', uri);
+  //   return res.send(404);
+  // }
+
+  new User({ username: username, password: password }).fetch().then(function(found) {
+    if (found) {
+      // these are not user specific links.. how to access?
+      res.redirect('/links');
+    } else {
+      var user = new User({
+        username: username,
+        password: password
+      });
+
+      user.save().then(function(newUser) {
+        // Probably not necessary. Review later.
+        Users.add(newUser);
+        res.redirect('/links');
+      });
+    }
+  });
+});
 
 
 /************************************************************/
