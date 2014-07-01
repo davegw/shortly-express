@@ -127,7 +127,7 @@ app.post('/login', function(req, res) {//users?
   new User({ username: username, password: password }).fetch().then(function(found) {
     if (found) {
       // these are not user specific links.. how to access? change.
-      res.redirect('/users');
+      res.redirect('/links');
     } else {
       res.redirect('/login');
     }

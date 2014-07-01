@@ -57,4 +57,18 @@ db.knex.schema.hasTable('users').then(function(exists) {
   }
 });
 
+db.knex.schema.hasTable('tokens').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('tokens', function (token) {
+      token.increments('id').primary();
+      token.string('hash', 50);
+      token.integer('user_id');
+      token.dateTime('expiration_date');
+      token.timestamps();
+    }).then(function (table) {
+      console.log('Created Table', table);
+    });
+  }
+});
+
 module.exports = db;
