@@ -17,7 +17,21 @@ app.configure(function() {
   app.use(partials());
   app.use(express.bodyParser())
   app.use(express.static(__dirname + '/public'));
+  app.use(express.cookieParser('secret'));
+  app.use(express.session())
 });
+
+
+//restrict
+var restrict = function(req, res, next){
+  if (req.session.user){
+    next();
+  } else {
+    req.session.error = 'Access denied!';
+    res.redirect('/login')
+  }
+};
+//added
 
 app.get('/', function(req, res) {
   res.render('signup');
@@ -27,10 +41,10 @@ app.get('/create', function(req, res) {
   res.render('index');
 });
 
-app.get('/links', function(req, res) {
+app.get('/links', restrict, function(req, res) {
   Links.reset().fetch().then(function(links) {
     links.query(function(qb){
-      qb.where('id', '<', 5);
+      qb.where('id', '>', 5);
     }).fetch().then(function(userLinks){
       res.send(200, userLinks.models);
     });
@@ -58,7 +72,8 @@ app.post('/links', function(req, res) {
         var link = new Link({
           url: uri,
           title: title,
-          base_url: req.headers.origin
+          base_url: req.headers.origin,
+          user_id: 1
         });
 
         link.save().then(function(newLink) {
@@ -130,11 +145,20 @@ app.post('/login', function(req, res) {//users?
 
   new User({ username: username, password: password }).fetch().then(function(found) {
     if (found) {
+      req.session.regenerate(function(){
+        req.session.user = found.id;
+        res.redirect('/links');
+      });
       // these are not user specific links.. how to access? change.
-      res.redirect('/links');
     } else {
       res.redirect('/login');
     }
+  });
+});
+
+app.get('/logout', function(req, res) {
+  req.session.destroy(function() {
+    res.redirect('/');
   });
 });
 
