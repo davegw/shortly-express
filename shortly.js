@@ -29,7 +29,11 @@ app.get('/create', function(req, res) {
 
 app.get('/links', function(req, res) {
   Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
+    links.query(function(qb){
+      qb.where('id', '<', 5);
+    }).fetch().then(function(userLinks){
+      res.send(200, userLinks.models);
+    });
   });
 });
 

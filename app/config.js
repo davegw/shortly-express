@@ -71,4 +71,11 @@ db.knex.schema.hasTable('tokens').then(function(exists) {
   }
 });
 
+// console.log("Running in config.js")
+// db.knex.schema.table('urls', function (table) {
+//   table.dropColumn('link_id');
+//   table.integer('user_id');
+//   console.log("Users schema added");
+// });
+
 module.exports = db;
