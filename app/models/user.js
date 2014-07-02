@@ -10,7 +10,7 @@ var User = db.Model.extend({
   links: function() {
     return this.hasMany(Link);
   },
-
+  
   initialize: function(){
     this.on('creating', function(model, attrs, options){
       var bcryptHash = Promise.promisify(bcrypt.hash);
@@ -21,7 +21,6 @@ var User = db.Model.extend({
         });
     });
   }
-  
 });
 
 module.exports = User;

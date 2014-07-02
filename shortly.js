@@ -22,28 +22,17 @@ app.configure(function() {
   app.use(express.session())
 });
 
-
-//restrict
-var restrict = function(req, res, next){
-  if (req.session.user){
-    next();
-  } else {
-    req.session.error = 'Access denied!';
-    res.redirect('/login')
-  }
-};
-//added
-
 app.get('/', function(req, res) {
   res.render('signup');
 });
 
-app.get('/create', restrict, function(req, res) {
+// Create a shortly link.
+app.get('/create', util.checkUser, function(req, res) {
   res.render('index');
 });
 
-app.get('/links', restrict, function(req, res) {
-  //req.session.id
+// User's shortly link index.
+app.get('/links', util.checkUser, function(req, res) {
   Links.reset().fetch().then(function(links) {
     links.query(function(qb){
       qb.where({user_id: req.session.user});
@@ -53,7 +42,8 @@ app.get('/links', restrict, function(req, res) {
   });
 });
 
-app.post('/links', restrict, function(req, res) {
+// Post request for generating new shortly link.
+app.post('/links', util.checkUser, function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -61,7 +51,7 @@ app.post('/links', restrict, function(req, res) {
     return res.send(404);
   }
 
-  new Link({ url: uri }).fetch().then(function(found) {
+  new Link({ url: uri, user_id: req.session.user }).fetch().then(function(found) {
     if (found) {
       res.send(200, found.attributes);
     } else {
@@ -101,22 +91,19 @@ app.get('/login', function(req, res) {
   res.render('login');
 });
 
-//remove this later
+// Users post route. Should not be renderable.
 app.get('/users', function(req, res) {
   Users.reset().fetch().then(function(users) {
     res.send(200, users.models);
   });
 });
 
-app.post('/signup', function(req, res) {//users?
+// Signup route.
+app.post('/signup', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  // if (!util.isValidUrl(uri)) {
-  //   console.log('Not a valid url: ', uri);
-  //   return res.send(404);
-  // }
-
+  // Search for username in database and redirect to login if found.
   new User({ username: username, password: password }).fetch().then(function(found) {
     if (found) {
       res.redirect('/login ');
@@ -126,6 +113,7 @@ app.post('/signup', function(req, res) {//users?
         password: password
       });
 
+      // Password is hashed and stored on creation.
       user.save().then(function(newUser) {
         Users.add(newUser);
         util.createSession(req, res, user);
@@ -134,16 +122,19 @@ app.post('/signup', function(req, res) {//users?
   });
 });
 
-app.post('/login', function(req, res) {//users?
+// Login route.
+app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
   new User({ username: username }).fetch().then(function(user) {
+    // Redirect to login if username not found.
     if (!user) {
       console.log(user);
       res.redirect('/login');
     }
     else {
+      // Compare user password to hashed password.
       bcrypt.compare(password, user.get('password'), function(err, found) {
         if (found) {
           util.createSession(req, res, user);
@@ -156,6 +147,7 @@ app.post('/login', function(req, res) {//users?
   });
 });
 
+// Logout route.
 app.get('/logout', function(req, res) {
   req.session.destroy(function() {
     res.redirect('/');
@@ -168,6 +160,7 @@ app.get('/logout', function(req, res) {
 // If the short-code doesn't exist, send the user to '/'
 /************************************************************/
 
+// Handles catchall routes. Redirects to shortly target site or redirect to homepage if not found.
 app.get('/*', function(req, res) {
   new Link({ code: req.params[0] }).fetch().then(function(link) {
     if (!link) {
