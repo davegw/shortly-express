@@ -2,7 +2,6 @@ var db = require('../config');
 var Link = require('./link.js');
 var bcrypt = require('bcrypt-nodejs');
 var Promise = require('bluebird');
-
 //dont forget to promisify
 
 var User = db.Model.extend({
@@ -15,7 +14,12 @@ var User = db.Model.extend({
 
   initialize: function(){
     this.on('creating', function(model, attrs, options){
-      console.log("created");
+      var bcryptHash = Promise.promisify(bcrypt.hash);
+      var password = model.get('password');
+      return bcryptHash(password, null, null)
+        .then(function(result){
+          model.set('password', result);
+        });
     });
   }
 });
