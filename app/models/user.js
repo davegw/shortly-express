@@ -2,7 +2,6 @@ var db = require('../config');
 var Link = require('./link.js');
 var bcrypt = require('bcrypt-nodejs');
 var Promise = require('bluebird');
-//dont forget to promisify
 
 var User = db.Model.extend({
   tableName: 'users',
@@ -22,6 +21,7 @@ var User = db.Model.extend({
         });
     });
   }
+  
 });
 
 module.exports = User;

@@ -10,6 +10,7 @@ var Link = require('./app/models/link');
 var Click = require('./app/models/click');
 
 var app = express();
+var bcrypt = require('bcrypt-nodejs');
 
 app.configure(function() {
   app.set('views', __dirname + '/views');
@@ -126,9 +127,8 @@ app.post('/signup', function(req, res) {//users?
       });
 
       user.save().then(function(newUser) {
-        // Probably not necessary. Review later.
         Users.add(newUser);
-        res.redirect('/users');
+        util.createSession(req, res, user);
       });
     }
   });
@@ -138,21 +138,20 @@ app.post('/login', function(req, res) {//users?
   var username = req.body.username;
   var password = req.body.password;
 
-  // if (!util.isValidUrl(uri)) {
-  //   console.log('Not a valid url: ', uri);
-  //   return res.send(404);
-  // }
-
-  new User({ username: username, password: password }).fetch().then(function(found) {
-    if (found) {
-      req.session.regenerate(function(){
-        console.log(found);
-        req.session.user = found.attributes.id; //attributes
-        res.redirect('/links');
-      });
-      // these are not user specific links.. how to access? change.
-    } else {
+  new User({ username: username }).fetch().then(function(user) {
+    if (!user) {
+      console.log(user);
       res.redirect('/login');
+    }
+    else {
+      bcrypt.compare(password, user.get('password'), function(err, found) {
+        if (found) {
+          util.createSession(req, res, user);
+        }
+        else {
+          res.redirect('/login');
+        }
+      });
     }
   });
 });
