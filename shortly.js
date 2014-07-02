@@ -37,21 +37,22 @@ app.get('/', function(req, res) {
   res.render('signup');
 });
 
-app.get('/create', function(req, res) {
+app.get('/create', restrict, function(req, res) {
   res.render('index');
 });
 
 app.get('/links', restrict, function(req, res) {
+  //req.session.id
   Links.reset().fetch().then(function(links) {
     links.query(function(qb){
-      qb.where('id', '>', 5);
+      qb.where({user_id: req.session.user});
     }).fetch().then(function(userLinks){
       res.send(200, userLinks.models);
     });
   });
 });
 
-app.post('/links', function(req, res) {
+app.post('/links', restrict, function(req, res) {
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -73,7 +74,7 @@ app.post('/links', function(req, res) {
           url: uri,
           title: title,
           base_url: req.headers.origin,
-          user_id: 1
+          user_id: req.session.user
         });
 
         link.save().then(function(newLink) {
@@ -117,8 +118,7 @@ app.post('/signup', function(req, res) {//users?
 
   new User({ username: username, password: password }).fetch().then(function(found) {
     if (found) {
-      // these are not user specific links.. how to access? change.
-      res.redirect('/users');
+      res.redirect('/login ');
     } else {
       var user = new User({
         username: username,
@@ -146,7 +146,8 @@ app.post('/login', function(req, res) {//users?
   new User({ username: username, password: password }).fetch().then(function(found) {
     if (found) {
       req.session.regenerate(function(){
-        req.session.user = found.id;
+        console.log(found);
+        req.session.user = found.attributes.id; //attributes
         res.redirect('/links');
       });
       // these are not user specific links.. how to access? change.
